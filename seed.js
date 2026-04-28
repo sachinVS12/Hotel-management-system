@@ -1,6 +1,5 @@
 require("dotenv").config();
 const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
 const User = require("./src/models/User");
 const MenuItem = require("./src/models/MenuItem");
 const connectDB = require("./src/config/database");
@@ -10,17 +9,17 @@ const seedDatabase = async () => {
     await connectDB();
 
     // Clear existing data (optional - be careful in production)
+    // Uncomment if you want to clear existing data
     // await User.deleteMany({});
     // await MenuItem.deleteMany({});
 
     // Create admin user
     let adminExists = await User.findOne({ role: "admin" });
     if (!adminExists) {
-      const hashedPassword = await bcrypt.hash("Admin@123", 10);
-      adminExists = await User.create({
+      const admin = new User({
         username: "admin",
         email: "admin@hotel.com",
-        password: hashedPassword,
+        password: "Admin@123",
         fullName: "System Administrator",
         role: "admin",
         phone: "1234567890",
@@ -36,6 +35,7 @@ const seedDatabase = async () => {
           "view_dashboard",
         ],
       });
+      await admin.save();
       console.log("✅ Admin user created");
     } else {
       console.log("⚠️ Admin user already exists");
@@ -44,11 +44,10 @@ const seedDatabase = async () => {
     // Create manager user
     let managerExists = await User.findOne({ username: "manager" });
     if (!managerExists) {
-      const hashedPassword = await bcrypt.hash("Manager@123", 10);
-      managerExists = await User.create({
+      const manager = new User({
         username: "manager",
         email: "manager@hotel.com",
-        password: hashedPassword,
+        password: "Manager@123",
         fullName: "Hotel Manager",
         role: "manager",
         phone: "1234567891",
@@ -60,6 +59,7 @@ const seedDatabase = async () => {
           "view_dashboard",
         ],
       });
+      await manager.save();
       console.log("✅ Manager user created");
     } else {
       console.log("⚠️ Manager user already exists");
@@ -68,17 +68,17 @@ const seedDatabase = async () => {
     // Create staff user
     let staffExists = await User.findOne({ username: "staff" });
     if (!staffExists) {
-      const hashedPassword = await bcrypt.hash("Staff@123", 10);
-      staffExists = await User.create({
+      const staff = new User({
         username: "staff",
         email: "staff@hotel.com",
-        password: hashedPassword,
+        password: "Staff@123",
         fullName: "Kitchen Staff",
         role: "staff",
         phone: "1234567892",
         isActive: true,
         permissions: [],
       });
+      await staff.save();
       console.log("✅ Staff user created");
     } else {
       console.log("⚠️ Staff user already exists");
@@ -160,6 +160,10 @@ const seedDatabase = async () => {
     process.exit(0);
   } catch (error) {
     console.error("❌ Error seeding database:", error);
+    console.error("Error details:", error.message);
+    if (error.errors) {
+      console.error("Validation errors:", error.errors);
+    }
     process.exit(1);
   }
 };
