@@ -1,5 +1,6 @@
 require("dotenv").config();
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 const User = require("./src/models/User");
 const MenuItem = require("./src/models/MenuItem");
 const connectDB = require("./src/config/database");
@@ -8,18 +9,24 @@ const seedDatabase = async () => {
   try {
     await connectDB();
 
-    // Clear existing data (optional - be careful in production)
-    // Uncomment if you want to clear existing data
+    console.log("🗑️  Clearing existing users (optional)...");
+    // Optional: Clear existing users (comment out if you want to keep existing)
     // await User.deleteMany({});
     // await MenuItem.deleteMany({});
 
+    // Hash passwords manually using bcrypt directly
+    const salt = await bcrypt.genSalt(10);
+    const adminHashedPassword = await bcrypt.hash("Admin@123", salt);
+    const managerHashedPassword = await bcrypt.hash("Manager@123", salt);
+    const staffHashedPassword = await bcrypt.hash("Staff@123", salt);
+
     // Create admin user
-    let adminExists = await User.findOne({ role: "admin" });
+    let adminExists = await User.findOne({ username: "admin" });
     if (!adminExists) {
       const admin = new User({
         username: "admin",
         email: "admin@hotel.com",
-        password: "Admin@123",
+        password: adminHashedPassword, // Use pre-hashed password
         fullName: "System Administrator",
         role: "admin",
         phone: "1234567890",
@@ -47,7 +54,7 @@ const seedDatabase = async () => {
       const manager = new User({
         username: "manager",
         email: "manager@hotel.com",
-        password: "Manager@123",
+        password: managerHashedPassword, // Use pre-hashed password
         fullName: "Hotel Manager",
         role: "manager",
         phone: "1234567891",
@@ -71,7 +78,7 @@ const seedDatabase = async () => {
       const staff = new User({
         username: "staff",
         email: "staff@hotel.com",
-        password: "Staff@123",
+        password: staffHashedPassword, // Use pre-hashed password
         fullName: "Kitchen Staff",
         role: "staff",
         phone: "1234567892",
@@ -157,10 +164,24 @@ const seedDatabase = async () => {
     console.log("Manager: manager / Manager@123");
     console.log("Staff:   staff / Staff@123");
 
+    // Display database stats
+    const userCount = await User.countDocuments();
+    const menuItemCount = await MenuItem.countDocuments();
+    console.log(`\n📊 Database Stats:`);
+    console.log(`   Total Users: ${userCount}`);
+    console.log(`   Total Menu Items: ${menuItemCount}`);
+
+    await mongoose.disconnect();
+    console.log("\n✅ Disconnected from MongoDB");
     process.exit(0);
   } catch (error) {
     console.error("❌ Error seeding database:", error);
     console.error("Error details:", error.message);
+    if (error.code === 11000) {
+      console.error(
+        "Duplicate key error - a user with this username or email already exists",
+      );
+    }
     if (error.errors) {
       console.error("Validation errors:", error.errors);
     }
