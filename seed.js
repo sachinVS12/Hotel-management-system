@@ -1,5 +1,6 @@
 require("dotenv").config();
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 const User = require("./src/models/User");
 const MenuItem = require("./src/models/MenuItem");
 const connectDB = require("./src/config/database");
@@ -8,13 +9,18 @@ const seedDatabase = async () => {
   try {
     await connectDB();
 
+    // Clear existing data (optional - be careful in production)
+    // await User.deleteMany({});
+    // await MenuItem.deleteMany({});
+
     // Create admin user
-    const adminExists = await User.findOne({ role: "admin" });
+    let adminExists = await User.findOne({ role: "admin" });
     if (!adminExists) {
-      await User.create({
+      const hashedPassword = await bcrypt.hash("Admin@123", 10);
+      adminExists = await User.create({
         username: "admin",
         email: "admin@hotel.com",
-        password: "Admin@123",
+        password: hashedPassword,
         fullName: "System Administrator",
         role: "admin",
         phone: "1234567890",
@@ -30,16 +36,19 @@ const seedDatabase = async () => {
           "view_dashboard",
         ],
       });
-      console.log("Admin user created");
+      console.log("✅ Admin user created");
+    } else {
+      console.log("⚠️ Admin user already exists");
     }
 
     // Create manager user
-    const managerExists = await User.findOne({ username: "manager" });
+    let managerExists = await User.findOne({ username: "manager" });
     if (!managerExists) {
-      await User.create({
+      const hashedPassword = await bcrypt.hash("Manager@123", 10);
+      managerExists = await User.create({
         username: "manager",
         email: "manager@hotel.com",
-        password: "Manager@123",
+        password: hashedPassword,
         fullName: "Hotel Manager",
         role: "manager",
         phone: "1234567891",
@@ -51,23 +60,28 @@ const seedDatabase = async () => {
           "view_dashboard",
         ],
       });
-      console.log("Manager user created");
+      console.log("✅ Manager user created");
+    } else {
+      console.log("⚠️ Manager user already exists");
     }
 
     // Create staff user
-    const staffExists = await User.findOne({ username: "staff" });
+    let staffExists = await User.findOne({ username: "staff" });
     if (!staffExists) {
-      await User.create({
+      const hashedPassword = await bcrypt.hash("Staff@123", 10);
+      staffExists = await User.create({
         username: "staff",
         email: "staff@hotel.com",
-        password: "Staff@123",
+        password: hashedPassword,
         fullName: "Kitchen Staff",
         role: "staff",
         phone: "1234567892",
         isActive: true,
         permissions: [],
       });
-      console.log("Staff user created");
+      console.log("✅ Staff user created");
+    } else {
+      console.log("⚠️ Staff user already exists");
     }
 
     // Add sample menu items
@@ -117,18 +131,38 @@ const seedDatabase = async () => {
           price: 8.99,
           isAvailable: true,
         },
+        {
+          name: "Pasta Alfredo",
+          category: "main_course",
+          price: 11.99,
+          isAvailable: true,
+        },
+        {
+          name: "Cold Coffee",
+          category: "beverage",
+          price: 3.99,
+          isAvailable: true,
+        },
       ];
 
       await MenuItem.insertMany(menuItems);
-      console.log("Sample menu items created");
+      console.log("✅ Sample menu items created");
+    } else {
+      console.log("⚠️ Menu items already exist");
     }
 
-    console.log("Database seeding completed!");
+    console.log("\n🎉 Database seeding completed successfully!");
+    console.log("\n📝 Login Credentials:");
+    console.log("Admin:   admin / Admin@123");
+    console.log("Manager: manager / Manager@123");
+    console.log("Staff:   staff / Staff@123");
+
     process.exit(0);
   } catch (error) {
-    console.error("Error seeding database:", error);
+    console.error("❌ Error seeding database:", error);
     process.exit(1);
   }
 };
 
+// Run seed function
 seedDatabase();
