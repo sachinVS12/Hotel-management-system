@@ -8,6 +8,9 @@ const connectDB = require("./src/config/database");
 const billRoutes = require("./src/routes/billRoutes");
 const orderRoutes = require("./src/routes/orderRoutes");
 const reportRoutes = require("./src/routes/reportRoutes");
+const authRoutes = require("./src/routes/authRoutes");
+const adminRoutes = require("./src/routes/adminRoutes");
+const managerRoutes = require("./src/routes/managerRoutes");
 
 const app = express();
 
@@ -19,10 +22,15 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Routes
+// Public routes
+app.use("/api/auth", authRoutes);
 app.use("/api/bills", billRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/reports", reportRoutes);
+
+// Protected routes
+app.use("/api/admin", adminRoutes);
+app.use("/api/manager", managerRoutes);
 
 // Health check
 app.get("/health", (req, res) => {
